@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja" data-base="dark" data-accent="gold">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0A0A0A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="カフェ風ミニマル勤怠管理PWA">
+  <title>Kintai</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- ═══ HOME ═══ -->
+    <section id="home" class="screen home active">
+      <div class="home-main">
+        <div class="status-area">
+          <div id="status-dot" class="status-dot"></div>
+          <span id="status-label">未登録</span>
+        </div>
+        <p id="date-label" class="home-date"></p>
+
+        <div class="hero-section">
+          <!-- E-11: aria-live で完了時のみ読み上げ -->
+          <div id="hero-time" aria-live="polite" aria-atomic="true">--:--</div>
+          <p id="hero-label" class="hero-label"></p>
+        </div>
+
+        <div class="monthly-section">
+          <span id="monthly-hours">0:00</span>
+          <span class="monthly-label">稼働</span>
+        </div>
+      </div>
+
+      <div class="home-today">
+        <!-- ── 予定あり（中央揃え） ── -->
+        <div id="home-today-info" style="display:none;">
+          <div class="today-shift-line">
+            <span id="home-shift-label" class="shift-badge early">早番</span>
+            <span id="home-times-text">09:00</span>
+          </div>
+          <div class="today-sub-line">
+            <span id="home-work-hours" class="today-workhrs" style="display:none;" aria-live="polite" aria-atomic="true"></span>
+            <span id="today-separator" class="today-separator" style="display:none;">·</span>
+            <span id="today-pay-display" class="today-pay" style="display:none;" aria-live="polite" aria-atomic="true" aria-busy="false"></span>
+          </div>
+          <button id="home-edit-btn" class="edit-icon-btn">編集</button>
+        </div>
+
+        <!-- ── 予定なし（D-05: ガイダンス付き空状態） ── -->
+        <div id="home-no-entry" style="display:none;">
+          <div class="home-no-entry-icon">📋</div>
+          <p class="home-no-entry-title">今日の予定がありません</p>
+          <p class="home-no-entry-text">シフトを選んで登録してください</p>
+          <div class="home-register-btns">
+            <button id="home-reg-early" class="shift-select-btn early">早番</button>
+            <button id="home-reg-late" class="shift-select-btn late">遅番</button>
+          </div>
+        </div>
+
+        <!-- ── 編集パネル（Today置き換え・中央揃え） ── -->
+        <div id="home-edit-panel" class="home-edit-panel" style="display:none;">
+          <div class="shift-btns-row">
+            <button id="home-edit-early" class="shift-select-btn early">早番</button>
+            <button id="home-edit-late" class="shift-select-btn late">遅番</button>
+          </div>
+          <div id="home-drum-section" class="edit-drum-section" style="display:none;">
+            <span class="edit-drum-label">退勤</span>
+            <div class="drum-group">
+              <div class="drum-wrapper">
+                <div id="home-drum-hour" class="drum-roller"></div>
+                <div class="drum-indicator"></div>
+              </div>
+              <span class="drum-colon">:</span>
+              <div class="drum-wrapper">
+                <div id="home-drum-min" class="drum-roller"></div>
+                <div class="drum-indicator"></div>
+              </div>
+            </div>
+          </div>
+          <button id="home-add-end-btn" class="add-end-btn" style="display:none;">＋ 退勤時間を追加</button>
+          <div class="edit-actions-row">
+            <button id="home-edit-cancel" class="btn btn-secondary">キャンセル</button>
+            <button id="home-edit-delete" class="btn btn-danger" style="display:none;">削除</button>
+            <button id="home-edit-save" class="btn btn-primary">保存</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ CALENDAR ═══ -->
+    <section id="calendar" class="screen calendar">
+      <div class="cal-scroll-area">
+        <div class="cal-header">
+          <button id="cal-prev" class="cal-nav-btn" aria-label="前月">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <span id="cal-month-label">2026年 6月</span>
+          <button id="cal-next" class="cal-nav-btn" aria-label="翌月">
+            <svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
+          </button>
+        </div>
+
+        <div class="cal-summary">
+          <div class="cal-summary-item">
+            <span class="cal-summary-label">稼働</span>
+            <span id="cal-summary-hours" class="cal-summary-value">0:00</span>
+          </div>
+          <div class="cal-summary-item">
+            <span class="cal-summary-label">給与</span>
+            <span id="cal-summary-pay" class="cal-summary-value pay" aria-live="polite" aria-atomic="true" aria-busy="false">¥ 0</span>
+          </div>
+        </div>
+
+        <div class="cal-weekdays">
+          <span class="cal-weekday">日</span><span class="cal-weekday">月</span>
+          <span class="cal-weekday">火</span><span class="cal-weekday">水</span>
+          <span class="cal-weekday">木</span><span class="cal-weekday">金</span>
+          <span class="cal-weekday">土</span>
+        </div>
+
+        <div id="cal-grid"></div>
+
+        <button id="cal-sched-toggle" class="cal-schedule-toggle">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          一括登録
+        </button>
+      </div>
+
+      <!-- スケジュール登録バー -->
+      <div id="cal-schedule-bar" class="cal-schedule-bar">
+        <span id="sched-count" class="sched-bar-info">選択中: <strong>0日</strong></span>
+        <div class="shift-btns-row">
+          <button id="sched-early" class="shift-select-btn early active">早番</button>
+          <button id="sched-late" class="shift-select-btn late">遅番</button>
+        </div>
+        <div class="sched-bar-actions">
+          <button id="sched-cancel" class="btn btn-secondary btn-small">キャンセル</button>
+          <button id="sched-confirm" class="btn btn-primary btn-small">登録</button>
+        </div>
+      </div>
+
+      <!-- 詳細パネル -->
+      <div id="cal-detail-panel" class="cal-detail-panel">
+        <div id="cal-detail-empty" class="cal-detail-empty">日付を選択</div>
+        <div id="cal-detail-info" style="display:none;">
+          <div class="cal-detail-header">
+            <div>
+              <span id="panel-date-label" class="cal-detail-date">6/2 (月)</span>
+              <span id="panel-holiday" class="cal-detail-holiday" style="display:none;"></span>
+            </div>
+            <span id="panel-shift-badge" class="shift-badge" style="display:none;"></span>
+          </div>
+          <div class="shift-btns-row">
+            <button id="panel-early" class="shift-select-btn early">早番</button>
+            <button id="panel-late" class="shift-select-btn late">遅番</button>
+          </div>
+          <div id="panel-drum-section" class="edit-drum-section" style="display:none;">
+            <span class="edit-drum-label">退勤</span>
+            <div class="drum-group">
+              <div class="drum-wrapper">
+                <div id="panel-drum-hour" class="drum-roller"></div>
+                <div class="drum-indicator"></div>
+              </div>
+              <span class="drum-colon">:</span>
+              <div class="drum-wrapper">
+                <div id="panel-drum-min" class="drum-roller"></div>
+                <div class="drum-indicator"></div>
+              </div>
+            </div>
+          </div>
+          <button id="panel-add-end" class="add-end-btn" style="display:none;">＋ 退勤時間を追加</button>
+          <div class="cal-detail-actions">
+            <button id="panel-cancel" class="btn btn-secondary btn-small">キャンセル</button>
+            <button id="panel-delete" class="btn btn-danger btn-small" style="display:none;">削除</button>
+            <div style="flex:1;"></div>
+            <button id="panel-save" class="btn btn-primary btn-small">保存</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ SETTINGS ═══ -->
+    <section id="settings" class="screen settings">
+      <div class="settings-group">
+        <p class="settings-group-label">時給</p>
+        <div class="wage-row">
+          <span class="wage-label">平日</span>
+          <div class="wage-input-wrap">
+            <span class="yen">¥</span>
+            <input id="weekday-wage" class="wage-input" type="number" min="0" step="50" value="1200">
+          </div>
+        </div>
+        <div class="wage-row">
+          <span class="wage-label">休日</span>
+          <div class="wage-input-wrap">
+            <span class="yen">¥</span>
+            <input id="weekend-wage" class="wage-input" type="number" min="0" step="50" value="1500">
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <p class="settings-group-label">デフォルト開始時間</p>
+        <div class="wage-row">
+          <span class="wage-label">早番</span>
+          <input id="early-start-time" class="time-input" type="time" value="09:00">
+        </div>
+        <div class="wage-row">
+          <span class="wage-label">遅番</span>
+          <input id="late-start-time" class="time-input" type="time" value="12:00">
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <p class="settings-group-label">ベースカラー</p>
+        <div class="theme-chips-row">
+          <div class="base-chip active" data-base="dark"></div>
+          <div class="base-chip" data-base="darkgray"></div>
+          <div class="base-chip" data-base="white"></div>
+          <div class="base-chip" data-base="cream"></div>
+          <div class="base-chip" data-base="brown"></div>
+        </div>
+        <div class="theme-labels-row">
+          <span class="theme-label-text">ブラック</span>
+          <span class="theme-label-text">ダーク</span>
+          <span class="theme-label-text">ホワイト</span>
+          <span class="theme-label-text">クリーム</span>
+          <span class="theme-label-text">ブラウン</span>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <p class="settings-group-label">アクセントカラー</p>
+        <div class="theme-chips-row">
+          <div class="accent-chip active" data-accent="gold"></div>
+          <div class="accent-chip" data-accent="green"></div>
+          <div class="accent-chip" data-accent="blue"></div>
+          <div class="accent-chip" data-accent="rose"></div>
+          <div class="accent-chip" data-accent="lavender"></div>
+        </div>
+        <div class="accent-labels-row">
+          <span class="accent-label-text">ゴールド</span>
+          <span class="accent-label-text">グリーン</span>
+          <span class="accent-label-text">ブルー</span>
+          <span class="accent-label-text">ローズ</span>
+          <span class="accent-label-text">ラベンダー</span>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <p class="settings-group-label">データ管理</p>
+        <button id="btn-export" class="export-btn">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          CSVエクスポート
+        </button>
+      </div>
+    </section>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <nav class="nav">
+      <button class="nav-item active" data-target="home" aria-label="ホーム">
+        <svg class="nav-icon" viewBox="0 0 24 24">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span class="nav-label">Home</span>
+      </button>
+      <button class="nav-item" data-target="calendar" aria-label="カレンダー">
+        <svg class="nav-icon" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span class="nav-label">Calendar</span>
+      </button>
+      <button class="nav-item" data-target="settings" aria-label="設定">
+        <svg class="nav-icon" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span class="nav-label">Settings</span>
+      </button>
+    </nav>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

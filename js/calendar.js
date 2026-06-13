@@ -6,7 +6,7 @@
 
 import { getMonthAttendance, saveAttendance, deleteAttendance, getAttendance, getSettings } from './storage.js';
 import { formatDate, isNonWorkday, getHolidayName } from './holidays.js';
-import { calcWorkMinutes, minutesToDisplay, getShiftType, getShiftLabel, calcMonthlySummary } from './attendance.js';
+import { calcWorkMinutes, minutesToDisplay, getShiftType, getShiftLabel, calcMonthlySummary, clampEndTime } from './attendance.js';
 import { renderHome } from './home.js';
 import { showToast, animateCounter, initDrumRoller, getDrumValue, flashElement } from './ui.js';
 
@@ -337,15 +337,4 @@ function updateScheduleBar() {
   document.getElementById('sched-count').innerHTML = `選択中: <strong>${scheduleModeSelected.size}日</strong>`;
 }
 
-/**
- * E-04: 退勤時間を15分単位でクランプ（23:53以降の繰り上がりを防ぐ）
- */
-function clampEndTime(timeStr) {
-  const [h, m] = timeStr.split(':').map(Number);
-  const rm = Math.round(m / 15) * 15;
-  if (rm >= 60) {
-    if (h >= 23) return '23:45';
-    return `${String(h + 1).padStart(2, '0')}:00`;
-  }
-  return `${String(h).padStart(2, '0')}:${String(rm).padStart(2, '0')}`;
-}
+

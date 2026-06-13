@@ -77,6 +77,20 @@ export function getShiftLabel(scheduledStart) {
 }
 
 /**
+ * 退勤時間を15分単位でクランプ（共通ユーティリティ）
+ * 例: "23:53" → "23:45"（24:00への繰り上がりを防ぐ）
+ */
+export function clampEndTime(timeStr) {
+  const [h, m] = timeStr.split(':').map(Number);
+  const rm = Math.round(m / 15) * 15;
+  if (rm >= 60) {
+    if (h >= 23) return '23:45';
+    return `${String(h + 1).padStart(2, '0')}:00`;
+  }
+  return `${String(h).padStart(2, '0')}:${String(rm).padStart(2, '0')}`;
+}
+
+/**
  * 自動退勤打刻チェック
  */
 export function checkAutoClockOut() {

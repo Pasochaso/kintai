@@ -130,13 +130,18 @@ html, body {
 
 /* ═══════ App Shell ═══════ */
 
-.app { position: relative; width: 100%; height: 100dvh; overflow: hidden; }
+.app {
+  position: relative; width: 100%; overflow: hidden;
+  /* PWA standalone で 100dvh が実際の表示領域より大きくなるケースに対応 */
+  height: 100svh;
+  height: -webkit-fill-available;
+}
 
 /* D-09: 画面遷移スライドアニメーション */
 .screen {
   position: absolute; inset: 0;
-  /* ② padding-topをsafe-area-inset-topで動的対応（Dynamic Islandなど端末差を吸収） */
-  padding: max(44px, env(safe-area-inset-top, 44px)) 20px calc(76px + env(safe-area-inset-bottom, 0px));
+  /* 共通ベース: safe-area + 小さめ余白 */
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 20px calc(env(safe-area-inset-bottom, 0px) + 76px);
   overflow-y: auto;
   opacity: 0;
   transform: translateX(20px);
@@ -155,7 +160,7 @@ html, body {
 .nav {
   position: fixed; bottom: 0; left: 0; right: 0;
   display: flex; align-items: center;
-  /* ① safe-area-inset-bottom をheightに加算してアイコン領域を常に62px確保 */
+  /* 共通ベース: safe-area付き */
   height: calc(62px + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--color-nav-bg);
@@ -401,7 +406,7 @@ html, body {
 }
 .drum-roller::-webkit-scrollbar { display: none; }
 .drum-spacer {
-  height: 36px; flex-shrink: 0;
+  height: 72px; flex-shrink: 0;
   scroll-snap-align: none;
 }
 .drum-item {
@@ -436,13 +441,14 @@ html, body {
 /* ═══════ CALENDAR ═══════ */
 
 .screen.calendar {
-  padding: 0 0 76px 0;
+  /* 共通ベース: safe-area付き */
+  padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 76px) 0;
   display: flex; flex-direction: column; overflow: hidden;
 }
 .cal-scroll-area {
   flex: 1; overflow-y: auto;
-  /* ② カレンダーもsafe-area-inset-topで動的対応 */
-  padding: max(40px, env(safe-area-inset-top, 40px)) 16px 10px;
+  /* 共通ベース: safe-area + 小さめ余白 */
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px 10px;
   scrollbar-width: none;
 }
 .cal-scroll-area::-webkit-scrollbar { display: none; }
@@ -635,8 +641,8 @@ html, body {
 
 /* ═══════ SETTINGS ═══════ */
 
-/* ② settingsもsafe-area-inset-topで動的対応 */
-.settings { padding-top: max(44px, env(safe-area-inset-top, 44px)); }
+/* 共通ベース: safe-area + 小さめ余白 */
+.settings { padding-top: calc(env(safe-area-inset-top, 0px) + 16px); }
 .settings-group { margin-bottom: 26px; }
 .settings-group-label {
   font-size: 0.72rem; font-weight: 700;
@@ -752,3 +758,50 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ═══════ PWA スタンドアロンモード専用 ═══════ */
+/* ブラウザで開いた時は一切適用されない */
+@media (display-mode: standalone) {
+  /* ── 画面コンテナ ──
+     top ではなく padding-top でオフセットすることで
+     position:absolute inset:0 のレイアウトを壊さない */
+  .screen {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 24px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 62px);
+  }
+
+  /* カレンダー画面 */
+  .screen.calendar {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 62px);
+  }
+  .cal-scroll-area {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 24px);
+  }
+
+  /* 詳細パネル・一括登録バー: safe-area二重適用を解消 */
+  .cal-detail-panel {
+    padding-bottom: 14px;
+  }
+  .cal-schedule-bar {
+    padding-bottom: 14px;
+  }
+
+  /* 設定画面 */
+  .settings {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 24px);
+  }
+
+  /* ナビバー: 通常時と同じ 62px 高さで統一 */
+  .nav {
+    height: calc(62px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    align-items: center;
+  }
+
+  /* トースト通知 */
+  .toast {
+    top: calc(env(safe-area-inset-top, 0px) + 28px);
+  }
+}
+
+

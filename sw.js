@@ -1,6 +1,6 @@
 // sw.js — Service Worker (E-02: ネットワークファースト戦略に変更)
 
-const CACHE_NAME = 'kintai-cache-v4';
+const CACHE_NAME = 'kintai-cache-v6';
 const STATIC_ASSETS = [
   './',
   './index.html',

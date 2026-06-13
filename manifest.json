@@ -1,6 +1,6 @@
 {
-  "name": "Kintai — Cafe Minimalist",
-  "short_name": "Kintai",
+  "name": "TimeRoast (勤怠管理)",
+  "short_name": "TimeRoast",
   "description": "カフェ風ミニマル勤怠管理",
   "start_url": "./index.html",
   "scope": "./",

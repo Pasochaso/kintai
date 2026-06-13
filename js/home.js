@@ -3,7 +3,7 @@
 // D-03: 保存時のマイクロアニメーション
 // D-06: 削除確認ダイアログ
 
-import { calcMonthlySummary, checkAutoClockOut, minutesToDisplay, calcWorkMinutes, getShiftLabel, getShiftType, calcDayPay } from './attendance.js';
+import { calcMonthlySummary, checkAutoClockOut, minutesToDisplay, calcWorkMinutes, getShiftLabel, getShiftType, calcDayPay, clampEndTime } from './attendance.js';
 import { getAttendance, saveAttendance, deleteAttendance, getSettings } from './storage.js';
 import { formatDate } from './holidays.js';
 import { showToast, animateCounter, initDrumRoller, getDrumValue, flashElement } from './ui.js';
@@ -220,18 +220,4 @@ function deleteEdit() {
   showToast('削除しました');
 }
 
-/**
- * E-04: 退勤時間を15分単位でクランプ
- * 例: "23:53" → "23:45"（24:00への繰り上がりを防ぐ）
- */
-function clampEndTime(timeStr) {
-  const [h, m] = timeStr.split(':').map(Number);
-  // 15分単位に丸め
-  const rm = Math.round(m / 15) * 15;
-  if (rm >= 60) {
-    // 時を繰り上げるが、23時の場合は45分にクランプ
-    if (h >= 23) return '23:45';
-    return `${String(h + 1).padStart(2, '0')}:00`;
-  }
-  return `${String(h).padStart(2, '0')}:${String(rm).padStart(2, '0')}`;
-}
+

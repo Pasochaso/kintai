@@ -51,15 +51,20 @@ export function flashElement(element, type = 'save') {
 /**
  * ドラムローラー（15分単位対応）
  * D-01: スナップ強化 + タップで直接選択
+ * スペーサーの高さを DRUM_ITEM_H * 2 に固定し、
+ * scrollTop 計算でスペーサー分のオフセットを正しく考慮する。
  */
 const DRUM_ITEM_H = 36;
+const DRUM_SPACER_H = DRUM_ITEM_H * 2;
 
 export function initDrumRoller(container, items, defaultValue) {
   container.innerHTML = '';
 
-  // 上スペーサー
+  // 上スペーサー（中央表示用の余白）
   const top = document.createElement('div');
   top.className = 'drum-spacer';
+  top.style.height = `${DRUM_SPACER_H}px`;
+  top.style.minHeight = `${DRUM_SPACER_H}px`;
   container.appendChild(top);
 
   // アイテム
@@ -72,7 +77,7 @@ export function initDrumRoller(container, items, defaultValue) {
 
     // D-01: タップで直接選択
     d.addEventListener('click', () => {
-      container.scrollTo({ top: idx * DRUM_ITEM_H, behavior: 'smooth' });
+      container.scrollTo({ top: idx * DRUM_ITEM_H + DRUM_SPACER_H, behavior: 'smooth' });
     });
 
     container.appendChild(d);
@@ -81,12 +86,14 @@ export function initDrumRoller(container, items, defaultValue) {
   // 下スペーサー
   const bot = document.createElement('div');
   bot.className = 'drum-spacer';
+  bot.style.height = `${DRUM_SPACER_H}px`;
+  bot.style.minHeight = `${DRUM_SPACER_H}px`;
   container.appendChild(bot);
 
   // 初期位置
   const defStr = String(defaultValue).padStart(2, '0');
   const idx = items.findIndex(v => String(v).padStart(2, '0') === defStr);
-  container.scrollTop = Math.max(0, idx) * DRUM_ITEM_H;
+  container.scrollTop = Math.max(0, idx) * DRUM_ITEM_H + DRUM_SPACER_H;
 
   // D-01: スクロール終了後にプログラム的にスナップ位置を補正
   let scrollTimer;
@@ -105,11 +112,20 @@ export function initDrumRoller(container, items, defaultValue) {
 }
 
 /**
+ * スクロール位置からアイテムインデックスを算出（スペーサーオフセット考慮）
+ */
+function scrollTopToIndex(scrollTop) {
+  return Math.round((scrollTop - DRUM_SPACER_H) / DRUM_ITEM_H);
+}
+
+/**
  * D-01: スクロール位置を最近傍のアイテムにスナップ
  */
 function snapToNearest(container) {
-  const ci = Math.round(container.scrollTop / DRUM_ITEM_H);
-  const targetTop = ci * DRUM_ITEM_H;
+  const ci = scrollTopToIndex(container.scrollTop);
+  const items = container.querySelectorAll('.drum-item');
+  const clampedIndex = Math.max(0, Math.min(ci, items.length - 1));
+  const targetTop = clampedIndex * DRUM_ITEM_H + DRUM_SPACER_H;
   if (Math.abs(container.scrollTop - targetTop) > 1) {
     container.scrollTo({ top: targetTop, behavior: 'smooth' });
   }
@@ -117,14 +133,16 @@ function snapToNearest(container) {
 }
 
 function highlightCenter(container) {
-  const ci = Math.round(container.scrollTop / DRUM_ITEM_H);
+  const ci = scrollTopToIndex(container.scrollTop);
   container.querySelectorAll('.drum-item').forEach((el, i) => {
     el.classList.toggle('active', i === ci);
   });
 }
 
 export function getDrumValue(container) {
-  const ci = Math.round(container.scrollTop / DRUM_ITEM_H);
+  const ci = scrollTopToIndex(container.scrollTop);
   const items = container.querySelectorAll('.drum-item');
-  return (ci >= 0 && ci < items.length) ? items[ci].dataset.value : '00';
+  const clampedIndex = Math.max(0, Math.min(ci, items.length - 1));
+  return items[clampedIndex]?.dataset.value ?? '00';
 }
+

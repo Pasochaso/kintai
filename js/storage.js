@@ -14,6 +14,15 @@ const DEFAULT_SETTINGS = {
   lateStartTime: '12:00',
 };
 
+// ─── Attendance キャッシュ ───
+// getAllAttendance の毎回フルパースを回避するためのメモリキャッシュ。
+// 書き込み系操作（save / delete）実行時にキャッシュを無効化する。
+let _attendanceCache = null;
+
+function invalidateAttendanceCache() {
+  _attendanceCache = null;
+}
+
 // ─── Settings ───
 
 export function getSettings() {
@@ -42,9 +51,20 @@ export function saveSettings(settings) {
 // ─── Attendance ───
 
 export function getAllAttendance() {
+  if (_attendanceCache !== null) return _attendanceCache;
+
   const raw = localStorage.getItem(KEYS.attendance);
-  if (!raw) return {};
-  try { return JSON.parse(raw); } catch { return {}; }
+  if (!raw) {
+    _attendanceCache = {};
+    return _attendanceCache;
+  }
+  try {
+    _attendanceCache = JSON.parse(raw);
+    return _attendanceCache;
+  } catch {
+    _attendanceCache = {};
+    return _attendanceCache;
+  }
 }
 
 export function getMonthAttendance(year, month) {
@@ -66,6 +86,7 @@ export function saveAttendance(dateStr, data) {
     const all = getAllAttendance();
     all[dateStr] = data;
     localStorage.setItem(KEYS.attendance, JSON.stringify(all));
+    invalidateAttendanceCache();
     return true;
   } catch (e) {
     if (e.name === 'QuotaExceededError' || e.code === 22) {
@@ -81,6 +102,7 @@ export function deleteAttendance(dateStr) {
     const all = getAllAttendance();
     delete all[dateStr];
     localStorage.setItem(KEYS.attendance, JSON.stringify(all));
+    invalidateAttendanceCache();
   } catch {
     // 削除は容量を減らすので失敗することは稀だが念のため
   }
